@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Telegram Info</title>
-    <!-- 1. Load Tailwind CSS for styling -->
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 2. Load the official Telegram WebApp script -->
+    <!-- Load Telegram WebApp script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* A simple style for the data display */
         .data-row {
             @apply flex justify-between items-center w-full px-4 py-3 border-b border-gray-200;
         }
@@ -22,89 +21,81 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
-            
             <!-- Header -->
             <div class="bg-blue-500 p-4">
                 <h1 class="text-xl font-bold text-white text-center">Your Telegram Info</h1>
             </div>
-
-            <!-- Content Area -->
+            <!-- Content -->
             <div id="content-wrapper" class="p-4">
-                
-                <!-- This is shown if the app is NOT opened in Telegram -->
-                <div id="error-message" class_behavior="hidden" class="hidden text-center text-red-600 p-4 bg-red-50 rounded-lg">
+                <!-- Error message -->
+                <div id="error-message" class="hidden text-center text-red-600 p-4 bg-red-50 rounded-lg">
                     <p class="font-semibold">Error!</p>
                     <p class="text-sm">This app must be opened inside Telegram to work.</p>
                 </div>
-
-                <!-- This is shown while loading or if user data is found -->
+                <!-- User info -->
                 <div id="user-info" class="hidden">
                     <div class="text-center text-gray-500 text-sm mb-4">
                         Hello! Here's the data Telegram provided:
                     </div>
-                    <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <!-- Data rows will be injected here by JavaScript -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden" id="data-container">
+                        <!-- Data rows will be injected here -->
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <script>
+        // Encapsulated function to get Telegram user data
+        function getTelegramUserData() {
+            try {
+                const WebApp = window.Telegram.WebApp;
+                WebApp.ready();
+                const userData = WebApp.initDataUnsafe.user;
+                if (userData && userData.username) {
+                    return userData;
+                } else {
+                    return null;
+                }
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // DOM ready
         document.addEventListener('DOMContentLoaded', () => {
-            // Get the elements
             const userInfoDiv = document.getElementById('user-info');
             const errorDiv = document.getElementById('error-message');
-            const dataContainer = userInfoDiv.querySelector('.border');
+            const dataContainer = document.getElementById('data-container');
 
-            try {
-                // 3. Initialize the Telegram WebApp
-                const WebApp = window.Telegram.WebApp;
-                WebApp.ready(); // Tell Telegram the app is ready
+            const userData = getTelegramUserData();
 
-                // 4. Access the user data
-                const userData = WebApp.initDataUnsafe.user;
+            if (userData) {
+                userInfoDiv.classList.remove('hidden');
 
-                if (userData && userData.username) {
-                    // User data is available, show it
-                    userInfoDiv.classList.remove('hidden');
+                const addRow = (label, value) => {
+                    if (value !== undefined && value !== null && value !== '') {
+                        const row = document.createElement('div');
+                        row.className = 'data-row';
+                        row.innerHTML = `
+                            <span class="data-label">${label}</span>
+                            <span class="data-value">${value}</span>
+                        `;
+                        dataContainer.appendChild(row);
+                    }
+                };
 
-                    // Function to create and append data rows
-                    const addDataRow = (label, value) => {
-                        if (value) { // Only add if the value exists
-                            const row = document.createElement('div');
-                            row.className = 'data-row';
-                            row.innerHTML = `
-                                <span class="data-label">${label}</span>
-                                <span class="data-value">${value}</span>
-                            `;
-                            dataContainer.appendChild(row);
-                        }
-                    };
-
-                    // 5. Display the user data
-                    addDataRow('Username (Login):', userData.username);
-                    addDataRow('First Name:', userData.first_name);
-                    addDataRow('Last Name:', userData.last_name);
-                    addDataRow('User ID:', userData.id);
-                    addDataRow('Language:', userData.language_code);
-
-                } else {
-                    // No user data found - likely not in Telegram
-                    errorDiv.classList.remove('hidden');
-                }
-
-            } catch (e) {
-                // Error (e.g., window.Telegram is not defined)
-                console.error('Error:', e);
+                addRow('Username (Login):', userData.username);
+                addRow('First Name:', userData.first_name);
+                addRow('Last Name:', userData.last_name);
+                addRow('User ID:', userData.id);
+                addRow('Language:', userData.language_code);
+            } else {
                 errorDiv.classList.remove('hidden');
             }
         });
     </script>
-
 </body>
 </html>
